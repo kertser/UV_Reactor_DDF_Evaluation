@@ -108,13 +108,16 @@ kurt_value = simpson(y=(x - mean_value)**4 * pdf_fitted_optimized, x=x) / var_va
 tuf = (mean_value - min_position_empirical) / mean_value
 cv = std_value / mean_value
 
-# Calculate TCV
-tail_values = x[x > mean_value]
-tail_pdf = pdf_fitted_optimized[x > mean_value]
-mean_tail = simpson(y=tail_values * tail_pdf, x=tail_values)
-var_tail = simpson(y=(tail_values - mean_tail)**2 * tail_pdf, x=tail_values)
-std_tail = np.sqrt(var_tail)
-tcv = std_tail / mean_tail if mean_tail != 0 else np.nan
+# Calculate TCV with a consistent threshold
+tail_threshold = 1e-6  # Probability threshold to consider for tail
+tail_indices_real = pdf_fitted_optimized > tail_threshold
+tail_values_real = x[tail_indices_real]
+tail_pdf_real = pdf_fitted_optimized[tail_indices_real]
+
+mean_tail_real = simpson(y=tail_values_real * tail_pdf_real, x=tail_values_real)
+var_tail_real = simpson(y=(tail_values_real - mean_tail_real)**2 * tail_pdf_real, x=tail_values_real)
+std_tail_real = np.sqrt(var_tail_real)
+tcv_real = std_tail_real / mean_tail_real if mean_tail_real != 0 else np.nan
 
 # Plotting the histogram and the fitted distribution with optimized parameters and scaling
 plt.figure(figsize=(10, 6))
@@ -155,16 +158,16 @@ print(f"TUF (Trajectory Uniformity Factor): {tuf:.2f}")
 print("TUF: Indicator of how close the dose distribution is to the ideal distribution. The closer to 1, the more efficient the reactor.")
 print(f"CV (Coefficient of Variation): {cv:.2f}")
 print("CV: Coefficient of variation, shows the relative variability of doses. Lower value indicates a narrower distribution, characteristic of an efficient reactor.")
-print(f"TCV (Tail Coefficient of Variation): {tcv:.2f}")
+print(f"TCV (Tail Coefficient of Variation): {tcv_real:.2f}")
 print("TCV: Coefficient of variation for the tails of the distribution, shows how long the tails are. Lower value indicates shorter tails, characteristic of an efficient reactor.")
 
 # Calculate the overall efficiency based on the dimensionless factors
 # Assuming Gaussian distribution has 0% efficiency
 # Here we are calculating a simple weighted sum for demonstration, the weights can be adjusted as needed
-weights = {'TUF': 0.5, 'CV': 0.25, 'TCV': 0.25}
+weights = {'TUF': 0.4, 'CV': 0.4, 'TCV': 0.2}
 efficiency = (weights['TUF'] * (1 - abs(tuf - 1)) +
               weights['CV'] * (1 - cv) +
-              weights['TCV'] * (1 - tcv)) * 100
+              weights['TCV'] * (1 - tcv_real)) * 100
 
 print(f"Overall Efficiency: {efficiency:.2f}%")
 print("Overall Efficiency: A comprehensive indicator that takes into account TUF, CV, and TCV. The closer to 100%, the more efficient the reactor.")
