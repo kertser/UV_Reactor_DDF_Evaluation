@@ -155,7 +155,7 @@ print(f"Empirical Kurtosis: {empirical_kurt}")
 
 # Print the dimensionless factors with interpretations
 print(f"TUF (Trajectory Uniformity Factor): {tuf:.2f}")
-print("TUF: Indicator of how close the dose distribution is to the ideal distribution. The closer to 1, the more efficient the reactor.")
+print("TUF: Indicator of how close the dose distribution is to the ideal distribution. The closer to 0, the more efficient the reactor.")
 print(f"CV (Coefficient of Variation): {cv:.2f}")
 print("CV: Coefficient of variation, shows the relative variability of doses. Lower value indicates a narrower distribution, characteristic of an efficient reactor.")
 print(f"TCV (Tail Coefficient of Variation): {tcv_real:.2f}")
