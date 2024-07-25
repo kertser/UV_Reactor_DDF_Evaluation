@@ -6,6 +6,7 @@ from scipy.optimize import minimize
 from scipy.integrate import simpson
 import warnings
 from config import resource_path as path
+from tabulate import tabulate
 
 # Ignore runtime warnings
 warnings.filterwarnings("ignore")
@@ -199,3 +200,14 @@ efficiency = (weights['DSL'] * (1 - abs(dsl - 1)) +
 
 print(f"Overall Efficiency: {efficiency:.2f}%")
 print("Overall Efficiency: A comprehensive indicator that takes into account DSL, CV, and TCV. The closer to 100%, the more efficient the reactor.")
+
+# Construct a table form the output names and values:
+
+# Create a DataFrame with the report
+report = pd.DataFrame(['Alpha', 'Beta', 'Loc', 'Mean', 'Var', 'Skew', 'Kurt', 'Min', 'Max', 'Empirical Mean', 'Empirical Var', 'Empirical Skew', 'Empirical Kurt', 'DSL', 'CV', 'TCV', 'IGF', 'Overall Efficiency'])
+report = report.rename(columns={0: 'Description'})
+report['Value'] = [alpha_opt, beta_opt, loc_opt, mean_value, var_value, skew_value, kurt_value, min_position_empirical, max_position_empirical, empirical_mean, empirical_var, empirical_skew, empirical_kurt, dsl, cv, tcv_real, normalized_igf, efficiency]
+report = report.round(2)
+report = report.set_index('Description')
+#print(report)
+print(tabulate(report, headers='keys', tablefmt='heavy_outline'))
