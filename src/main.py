@@ -105,8 +105,31 @@ skew_value = simpson(y=(x - mean_value)**3 * pdf_fitted_optimized, x=x) / std_va
 kurt_value = simpson(y=(x - mean_value)**4 * pdf_fitted_optimized, x=x) / var_value**2 - 3
 
 # Calculate dimensionless factors
-tuf = (mean_value - min_position_empirical) / mean_value
+dsl = (mean_value - min_position_empirical) / mean_value
 cv = std_value / mean_value
+
+# Define alpha and beta for ideal and Gaussian systems
+ideal_alpha = 1000
+ideal_beta = 1
+gaussian_alpha = 1
+gaussian_beta = 1000
+
+# Calculate ratios
+ideal_ratio = ideal_alpha / ideal_beta
+gaussian_ratio = gaussian_alpha / gaussian_beta
+
+# Calculate logarithms of these ratios
+min_ratio_log = np.log(gaussian_ratio)
+max_ratio_log = np.log(ideal_ratio)
+
+# Example optimized alpha and beta
+alpha_opt = 1.4
+beta_opt = 194.31
+igf_ratio = alpha_opt / beta_opt
+
+# Normalize the IGF
+igf_log = np.log(igf_ratio)
+normalized_igf = (igf_log - min_ratio_log) / (max_ratio_log - min_ratio_log)
 
 # Calculate TCV with a consistent threshold
 tail_threshold = 1e-6  # Probability threshold to consider for tail
@@ -153,21 +176,24 @@ print(f"Empirical Variance: {empirical_var}")
 print(f"Empirical Skewness: {empirical_skew}")
 print(f"Empirical Kurtosis: {empirical_kurt}")
 
+
 # Print the dimensionless factors with interpretations
-print(f"TUF (Trajectory Uniformity Factor): {tuf:.2f}")
-print("TUF: Indicator of how close the dose distribution is to the ideal distribution. The closer to 0, the more efficient the reactor.")
+print(f"DSL (Dose Spread Level): {dsl:.2f}")
+print("DSL: Indicator of how close the dose distribution is to the ideal distribution. The closer to 0, the more efficient the reactor.")
 print(f"CV (Coefficient of Variation): {cv:.2f}")
 print("CV: Coefficient of variation, shows the relative variability of doses. Lower value indicates a narrower distribution, characteristic of an efficient reactor.")
 print(f"TCV (Tail Coefficient of Variation): {tcv_real:.2f}")
 print("TCV: Coefficient of variation for the tails of the distribution, shows how long the tails are. Lower value indicates shorter tails, characteristic of an efficient reactor.")
+print(f"Inverse Gama Factor: {normalized_igf}")
+print("Inv.Gama Factor This parameter provides an additional measure of efficiency, with higher values indicating better performance. The rationale is that higher alpha values (less skewness) combined with lower beta values (less spread) suggest a more concentrated and efficient dose distribution. ")
 
 # Calculate the overall efficiency based on the dimensionless factors
 # Assuming Gaussian distribution has 0% efficiency
 # Here we are calculating a simple weighted sum for demonstration, the weights can be adjusted as needed
-weights = {'TUF': 0.4, 'CV': 0.4, 'TCV': 0.2}
-efficiency = (weights['TUF'] * (1 - abs(tuf - 1)) +
+weights = {'DSL': 0.5, 'CV': 0.25, 'TCV': 0.25}
+efficiency = (weights['DSL'] * (1 - abs(dsl - 1)) +
               weights['CV'] * (1 - cv) +
               weights['TCV'] * (1 - tcv_real)) * 100
 
 print(f"Overall Efficiency: {efficiency:.2f}%")
-print("Overall Efficiency: A comprehensive indicator that takes into account TUF, CV, and TCV. The closer to 100%, the more efficient the reactor.")
+print("Overall Efficiency: A comprehensive indicator that takes into account DSL, CV, and TCV. The closer to 100%, the more efficient the reactor.")

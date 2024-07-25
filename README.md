@@ -14,7 +14,7 @@ This project aims to evaluate the dose distribution function (DDF) of a hydropho
 
 ## Overview
 
-The project uses the inverse gamma distribution to model the dose distribution in a hydrophotonic reactor. It evaluates the reactor's efficiency based on dimensionless factors such as the Trajectory Uniformity Factor (TUF), Coefficient of Variation (CV), and Tail Coefficient of Variation (TCV).
+The project uses the inverse gamma distribution to model the dose distribution in a hydrophotonic reactor. It evaluates the reactor's efficiency based on dimensionless factors such as the Dose Spread Level (DSL), Coefficient of Variation (CV), and Tail Coefficient of Variation (TCV).
 
 ## Features
 
@@ -72,7 +72,7 @@ The project uses the inverse gamma distribution to model the dose distribution i
     - Calculate empirical moments of the data.
     - Perform a grid search to find the best initial parameters for the inverse gamma distribution.
     - Optimize the parameters of the inverse gamma distribution.
-    - Calculate dimensionless factors (TUF, CV, TCV) and overall efficiency.
+    - Calculate dimensionless factors (DSL, CV, TCV) and overall efficiency.
     - Plot the dose distribution and the fitted inverse gamma distribution.
     - Display the calculated parameters and efficiency metrics.
 
@@ -81,7 +81,7 @@ The project uses the inverse gamma distribution to model the dose distribution i
 The script will output:
 - Optimized parameters of the inverse gamma distribution (alpha, beta, location).
 - Empirical and fitted moments (mean, variance, skewness, kurtosis).
-- Dimensionless factors: TUF, CV, TCV.
+- Dimensionless factors: DSL, CV, TCV.
 - Overall efficiency of the reactor as a percentage.
 
 ## Contributing
