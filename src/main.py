@@ -11,7 +11,9 @@ from config import resource_path as path
 warnings.filterwarnings("ignore")
 
 # Load the data from the uploaded CSV file
-data = pd.read_csv(path + "DDF.csv")
+# data = pd.read_csv(path + "DDF.csv")
+# bad data:
+data = pd.read_csv(path + "DDF_bad.csv")
 
 # Extract the dose values and distribution values
 dose_values = data["range[mJ/cm^2]"]
