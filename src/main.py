@@ -17,7 +17,7 @@ from tabulate import tabulate
 warnings.filterwarnings("ignore")
 
 # Load the data from the uploaded CSV file
-# data = pd.read_csv(path + "DDF.csv")
+# data = pd.read_csv(path + "DDF_good.csv")
 # bad data:
 data = pd.read_csv(path + "DDF_bad.csv")
 

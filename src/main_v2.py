@@ -26,7 +26,6 @@ The closer to 100%, the more efficient the reactor.
 What can be considered as a bad reactor with improper DDF?
 - DSL (normalized distance between the average and the minumum) is far from 0, closer to 1
 - CV (coefficient of variation) is far from 0 - meaning the distribution is wider than normal
-- TCV (tail coefficient of variation) is far from 0 - meaning the tails are longer than normal, especially the left tail
 - IGF (Inverse Gama Factor) is far from 0 - meaning the distribution is not Inverse-Gamma shape
 - Overall efficiency close to 0% - meaning the reactor is not efficient
 """
@@ -56,15 +55,6 @@ def calculate_empirical_moments(dose_values, distribution_values):
     empirical_median = np.median(dose_values)
     empirical_min = np.min(dose_values)
 
-    # Debugging prints to check values
-    print(f"Empirical Mean: {empirical_mean}")
-    print(f"Empirical Variance: {empirical_var}")
-    print(f"Empirical Std: {empirical_std}")
-    print(f"Empirical Skew: {empirical_skew}")
-    print(f"Empirical Kurt: {empirical_kurt}")
-    print(f"Empirical Median: {empirical_median}")
-    print(f"Empirical Min: {empirical_min}")
-
     return empirical_mean, empirical_var, empirical_std, empirical_skew, empirical_kurt, empirical_median, empirical_min
 
 def calculate_efficiency(dose_values, distribution_values):
@@ -75,13 +65,12 @@ def calculate_efficiency(dose_values, distribution_values):
     epsilon = 0.01
 
     # Calculate the penalties
+    # DSL penalty: normalized distance between the average and the minumum dose
+    # DSL should be close to 0
     min_penalty = max(epsilon, 1 - abs(empirical_min / empirical_mean))
 
-    # Revised asymmetry penalty calculation using exponential function
-    asymmetry_penalty = max(epsilon, np.exp(-abs((empirical_mean - empirical_median) / empirical_std)))
-
-    # Adjusted penalty for skewness: heavier penalty on left skew (negative) than on right skew (positive)
-    skewness_penalty = max(epsilon, np.exp(-abs(empirical_skew / 5)))
+    # Adjusted penalty for skewness: heavier penalty on left skew (negative) than on right skew (positive):
+    skewness_penalty = max(epsilon, np.exp(-abs(empirical_skew / 5))) if empirical_skew < 0 else max(epsilon, np.exp(-abs(empirical_skew / 20)))
 
     # Adjusted penalty for kurtosis: smaller overall effect, prefer positive kurtosis
     kurtosis_penalty = max(epsilon, np.exp(-abs(empirical_kurt / 20)))
@@ -90,22 +79,20 @@ def calculate_efficiency(dose_values, distribution_values):
 
     # Ensure penalties are normalized to [0, 1]
     min_penalty = min(1, min_penalty)
-    asymmetry_penalty = min(1, asymmetry_penalty)
     skewness_penalty = min(1, skewness_penalty)
     kurtosis_penalty = min(1, kurtosis_penalty)
     cv_penalty = min(1, cv_penalty)
 
     # Weights for penalties
-    weight_min = 0.30
-    weight_asymmetry = 0.20
-    weight_skewness = 0.15
-    weight_kurtosis = 0.10
-    weight_cv = 0.25
+    weight_min = 0.80
+    weight_skewness = 0.05
+    weight_kurtosis = 0.05
+    weight_cv = 0.1
 
     # Calculate weighted total efficiency
-    efficiency = (min_penalty * weight_min + asymmetry_penalty * weight_asymmetry + skewness_penalty * weight_skewness + kurtosis_penalty * weight_kurtosis + cv_penalty * weight_cv)
+    efficiency = (min_penalty * weight_min + skewness_penalty * weight_skewness + kurtosis_penalty * weight_kurtosis + cv_penalty * weight_cv)
 
-    return efficiency, min_penalty, asymmetry_penalty, skewness_penalty, kurtosis_penalty, cv_penalty
+    return efficiency, min_penalty, skewness_penalty, kurtosis_penalty, cv_penalty
 
 def plot_distribution(dose_values, distribution_values, empirical_mean, min_position_empirical, max_position_empirical):
     """Plot the dose distribution and empirical statistics."""
@@ -126,7 +113,7 @@ def plot_distribution(dose_values, distribution_values, empirical_mean, min_posi
     plt.show()
 
 def create_report(empirical_mean, empirical_var, empirical_skew, empirical_kurt, min_position_empirical,
-                  max_position_empirical, min_penalty, asymmetry_penalty, skew_penalty, kurtosis_penalty, cv_penalty,
+                  max_position_empirical, min_penalty, skew_penalty, kurtosis_penalty, cv_penalty,
                   efficiency):
     """Create a report DataFrame with calculated metrics."""
     report = pd.DataFrame([
@@ -136,8 +123,7 @@ def create_report(empirical_mean, empirical_var, empirical_skew, empirical_kurt,
         ['Dose Kurtosis', empirical_kurt],
         ['Minimum Dose', min_position_empirical],
         ['Most Probable Dose', max_position_empirical],
-        ['Penalty: Minimum Dose', min_penalty],
-        ['Penalty: Asymmetry', asymmetry_penalty],
+        ['Penalty: DSL', min_penalty],
         ['Penalty: Skewness', skew_penalty],
         ['Penalty: Kurtosis', kurtosis_penalty],
         ['Penalty: Coefficient of Variation', cv_penalty],
@@ -149,7 +135,7 @@ def create_report(empirical_mean, empirical_var, empirical_skew, empirical_kurt,
 
 def main():
     # Load the data
-    data = load_data("../resources/DDF_bad.csv")  # Adjust the file path as needed
+    data = load_data("../resources/DDF_good.csv")  # Adjust the file path as needed
     dose_values = data["range[mJ/cm^2]"]
     distribution_values = data["u(D)"]
 
@@ -160,7 +146,7 @@ def main():
     min_position_empirical = dose_values[distribution_values.ne(0).idxmax()]
 
     # Calculate efficiency
-    efficiency, min_penalty, asymmetry_penalty, skew_penalty, kurtosis_penalty, cv_penalty = calculate_efficiency(
+    efficiency, min_penalty, skew_penalty, kurtosis_penalty, cv_penalty = calculate_efficiency(
         dose_values, distribution_values)
 
     # Plot the histogram and the empirical statistics
@@ -168,7 +154,7 @@ def main():
 
     # Create and print the report
     create_report(empirical_mean, empirical_var, empirical_skew, empirical_kurt, min_position_empirical,
-                  max_position_empirical, min_penalty, asymmetry_penalty, skew_penalty, kurtosis_penalty, cv_penalty,
+                  max_position_empirical, min_penalty, skew_penalty, kurtosis_penalty, cv_penalty,
                   efficiency)
 
 if __name__ == "__main__":
