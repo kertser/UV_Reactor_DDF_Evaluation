@@ -41,10 +41,20 @@ min_position_empirical = dose_values[distribution_values.ne(0).idxmax()]
 
 # Compare with Gaussian and Inverse Gamma distributions
 def weighted_fit_norm(dose_values, distribution_values):
-    mean = np.average(dose_values, weights=distribution_values)
-    variance = np.average((dose_values - mean) ** 2, weights=distribution_values)
-    std = np.sqrt(variance)
-    return mean, std
+    def neg_log_likelihood(params):
+        mu, sigma = params
+        return -np.sum(distribution_values * norm.logpdf(dose_values, mu, sigma))
+
+    def constraint(params):
+        mu, sigma = params
+        return mu - max_position_empirical
+
+    initial_params = [empirical_mean, empirical_std]
+    bounds = [(None, None), (0.01, None)]
+
+    result = minimize(neg_log_likelihood, initial_params, method='SLSQP', constraints={'type': 'eq', 'fun': constraint}, bounds=bounds, options={'ftol': 1e-12})
+    mu, sigma = result.x
+    return mu, sigma
 
 def weighted_fit_invgamma(dose_values, distribution_values):
     def neg_log_likelihood(params):
@@ -57,8 +67,9 @@ def weighted_fit_invgamma(dose_values, distribution_values):
         return mode - max_position_empirical
 
     initial_params = [2, 0, 1, 2]
-    result = minimize(neg_log_likelihood, initial_params, constraints={'type': 'eq', 'fun': constraint},
-                      bounds=((0.01, None), (None, None), (0.01, None), (0.01, 10)))
+    bounds = [(0.01, None), (None, None), (0.01, None), (0.01, 10)]
+
+    result = minimize(neg_log_likelihood, initial_params, method='SLSQP', constraints={'type': 'eq', 'fun': constraint}, bounds=bounds, options={'ftol': 1e-12})
     alpha, loc, beta, k = result.x
     return alpha, loc, beta, k
 
