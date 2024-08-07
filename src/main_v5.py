@@ -22,6 +22,11 @@ dose_values, distribution_values = dose_values[mask], distribution_values[mask]
 
 # Calculate empirical moments
 def calculate_empirical_moments(dose_values, distribution_values):
+    """
+    Calculate empirical moments: mean, variance, standard deviation, skewness, kurtosis, minimum, DSL penalty, and CV penalty.
+    :param dose_values:
+    :param distribution_values:
+    """
     total_weight = np.sum(distribution_values)
     empirical_mean = np.sum(dose_values * distribution_values) / total_weight
     empirical_var = np.sum(distribution_values * (dose_values - empirical_mean) ** 2) / total_weight
@@ -41,11 +46,28 @@ min_position_empirical = dose_values[distribution_values.ne(0).idxmax()]
 
 # Compare with Gaussian and Inverse Gamma distributions
 def weighted_fit_norm(dose_values, distribution_values):
+    """
+    Calculate the weighted fit of the data to a normal distribution using the Maximum Likelihood Estimation (MLE) method.
+    :param dose_values:
+    :param distribution_values:
+    :return: mu and sigma of the normal distribution
+    """
     def neg_log_likelihood(params):
+        """
+        Negative log-likelihood function for the normal distribution.
+        :param params: Tuple containing (mu, sigma)
+        :return: neg-log likehood value
+        """
         mu, sigma = params
         return -np.sum(distribution_values * norm.logpdf(dose_values, mu, sigma))
 
     def constraint(params):
+        """
+        Constraint function for the normal distribution.
+        Ensures that the mode of the distribution is at the maximum position.
+        :param params: Tuple containing (mu, sigma)
+        :return: difference between the mode and the maximum position
+        """
         mu, sigma = params
         return mu - max_position_empirical
 
@@ -57,11 +79,27 @@ def weighted_fit_norm(dose_values, distribution_values):
     return mu, sigma
 
 def weighted_fit_invgamma(dose_values, distribution_values):
+    """
+    Calculate the weighted fit of the data to an inverse gamma distribution using the Maximum Likelihood Estimation (MLE) method.
+    :param dose_values:
+    :param distribution_values:
+    :return: alpha, loc, beta, k of the inverse gamma distribution
+    """
     def neg_log_likelihood(params):
+        """
+        Calculate the negative log-likelihood for the inverse gamma distribution.
+        :param params: Tuple containing (alpha, loc, beta, k)
+        :return: neg-log likehood value
+        """
         alpha, loc, beta, k = params
         return -np.sum(distribution_values * invgamma.logpdf(dose_values, alpha, loc=loc, scale=beta))
 
+
     def constraint(params):
+        """
+        Constraint function for the inverse gamma distribution.
+        Ensures that the mode of the distribution is at the maximum position.
+        """
         alpha, loc, beta, k = params
         mode = beta / (alpha + k) + loc
         return mode - max_position_empirical
@@ -78,6 +116,21 @@ alpha, loc, beta, k = weighted_fit_invgamma(dose_values, distribution_values)
 
 # Plot the histogram and the empirical statistics
 def plot_distribution(dose_values, distribution_values, empirical_mean, min_position_empirical, max_position_empirical, mu, std, alpha, loc, beta):
+    """
+    Plot the distribution of the data and display the empirical statistics.
+    :param dose_values:
+    :param distribution_values:
+    :param empirical_mean:
+    :param min_position_empirical:
+    :param max_position_empirical:
+    :param mu:
+    :param std:
+    :param alpha:
+    :param loc:
+    :param beta:
+    :return: MatPlotLib plot
+    """
+
     width = (dose_values.max() - dose_values.min()) / len(dose_values)
     plt.figure(figsize=(10, 6))
     plt.bar(dose_values, distribution_values, width=width, alpha=0.5, label='Data')
@@ -106,6 +159,9 @@ plot_distribution(dose_values, distribution_values, empirical_mean, min_position
 
 # Create and print the report
 def create_report(empirical_mean, empirical_var, empirical_skew, empirical_kurt, min_position_empirical, max_position_empirical, dsl_penalty, cv_penalty, gof_gaussian, gof_invgamma):
+    """
+    Calculate and print the report with the empirical statistics and goodness-of-fit metrics.
+    """
     report = pd.DataFrame([
         ['Mean Dose', round(empirical_mean, 2), 'Average dose delivered.'],
         ['Dose Variance', round(empirical_var, 2), 'Spread of dose values around the mean.'],
